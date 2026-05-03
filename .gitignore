@@ -10,6 +10,7 @@ dist/
 build/
 .env
 .venv
+<<<<<<< HEAD
 .venv*/
 venv/
 .env.bak
@@ -20,3 +21,9 @@ node_modules/
 models/
 # Hugging Face 默认缓存（项目目录 huggingface/，见 HF_HOME）
 huggingface/
+=======
+venv/
+node_modules/
+.DS_Store
+*.log
+>>>>>>> 58f876c47c6bdda79d0f90d048203c86fa419e33
