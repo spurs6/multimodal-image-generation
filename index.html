@@ -1,0 +1,351 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>多模态图像生成系统</title>
+    <link rel="stylesheet" href="/static/css/app.css?v=2">
+</head>
+
+<body>
+    <div class="container">
+        <header>
+            <h1>多模态图像生成系统</h1>
+            <p class="subtitle">文本生成图像 · 提示词扩充 · CLIP 评估 · 可选语音朗读</p>
+        </header>
+
+        <div class="prefs-bar">
+            <label>
+                <input type="checkbox" id="prefs-autospeak">
+                生成成功后自动朗读描述（默认关闭）
+            </label>
+        </div>
+
+        <div class="tabs" role="tablist" aria-label="生成模式">
+            <button type="button" class="tab active" id="tab-sd21" role="tab" aria-selected="true"
+                aria-controls="sd21-panel" tabindex="0" onclick="switchMode('sd21')">文生图（SD 2.1 / SD 1.5 风格）</button>
+            <button type="button" class="tab" id="tab-controlnet" role="tab" aria-selected="false"
+                aria-controls="controlnet-panel" tabindex="-1" onclick="switchMode('controlnet')">SD 1.5 + 参考模式</button>
+        </div>
+
+        <!-- 文生图 -->
+        <div class="panel active" id="sd21-panel" role="tabpanel" aria-labelledby="tab-sd21">
+            <div class="main-content">
+                <div class="left-panel">
+                    <section class="step">
+                        <h2 class="step-title"><span class="step-num">1</span>提示词</h2>
+                        <div class="input-group">
+                            <label class="field-label" for="sd21-prompt">输入创意描述（支持中文）</label>
+                            <textarea id="sd21-prompt" placeholder="例如：一只可爱的猫咪坐在窗台边…" rows="4"></textarea>
+                            <p class="hint-text">快捷键：在输入框内按 Ctrl+Enter 可快速生成。</p>
+                        </div>
+                    </section>
+
+                    <section class="step">
+                        <h2 class="step-title"><span class="step-num">2</span>画风 / 模型</h2>
+                        <div class="input-group">
+                            <label class="field-label" for="sd21-backend">选择生成管线（流程均为：翻译 → 生成 → BLIP → CLIP）</label>
+                            <select id="sd21-backend" class="ui-select">
+                                <option value="sd21">SD 2.1 基础（768×768）</option>
+                                <option value="anime">SD 1.5 二次元（AOM3A3）</option>
+                                <option value="watercolor">SD 1.5 水彩（DreamShaper + LoRA）</option>
+                                <option value="oil">SD 1.5 油画风（DreamShaper + LoRA）</option>
+                                <option value="realistic">SD 1.5 写实（DreamShaper）</option>
+                                <option value="sketch">SD 1.5 素描（DreamShaper + LoRA）</option>
+                            </select>
+                            <p class="hint-text">若填写了下方「扩充提示词」，生成将优先采用扩充内容。</p>
+                        </div>
+                        <div class="input-group" id="sd15-resolution-wrap" style="display: none; margin-top: 12px;">
+                            <label class="field-label" for="sd15-resolution">SD 1.5 输出边长（正方形）</label>
+                            <select id="sd15-resolution" class="ui-select">
+                                <option value="512" selected>512（默认，省显存）</option>
+                                <option value="640">640（更清晰，需更多显存）</option>
+                                <option value="768">768（最清晰，需较大显存）</option>
+                            </select>
+                            <p class="hint-text">选 640/768 时服务端会检查 GPU 空闲显存；不足时将提示改用 512 或关闭其它占显存程序。二次元底模已启用 CLIP Skip = 2。</p>
+                        </div>
+                    </section>
+
+                    <section class="step">
+                        <h2 class="step-title"><span class="step-num">3</span>可选：扩充提示词</h2>
+                        <button type="button" id="sd21-enhance-btn" class="btn btn-secondary"
+                            onclick="enhancePrompt('sd21')">扩充提示词（DeepSeek）</button>
+                        <div id="sd21-enhance-loading" class="loading" style="display: none;">
+                            <div class="spinner"></div>
+                            <p id="sd21-enhance-status">正在扩充…</p>
+                        </div>
+                        <div id="sd21-enhanced-section" style="display: none; margin-top: 14px;">
+                            <div class="input-group">
+                                <label class="field-label" for="sd21-enhanced-prompt">扩充结果（可编辑；有内容时优先生效）</label>
+                                <textarea id="sd21-enhanced-prompt" placeholder="扩充后的提示词将显示在这里…"></textarea>
+                            </div>
+                        </div>
+                    </section>
+
+                    <section class="step">
+                        <h2 class="step-title"><span class="step-num">4</span>参数与生成</h2>
+                        <details class="advanced-block">
+                            <summary>高级参数：推理步数 / 引导强度</summary>
+                            <div class="slider-group" style="margin-top: 12px;">
+                                <div class="slider-item">
+                                    <label class="field-label">推理步数 <span id="sd21-steps-value">50</span></label>
+                                    <input type="range" id="sd21-steps" min="10" max="100" value="50"
+                                        oninput="document.getElementById('sd21-steps-value').textContent = this.value">
+                                </div>
+                                <div class="slider-item">
+                                    <label class="field-label">引导系数 <span id="sd21-guidance-value">10.0</span></label>
+                                    <input type="range" id="sd21-guidance" min="1" max="20" value="10" step="0.5"
+                                        oninput="document.getElementById('sd21-guidance-value').textContent = this.value">
+                                </div>
+                            </div>
+                        </details>
+                        <div class="btn-row" style="margin-top: 16px;">
+                            <button type="button" id="sd21-generate-btn" class="btn btn-primary"
+                                onclick="generateImage('sd21')">生成图像</button>
+                            <button type="button" class="btn btn-secondary"
+                                onclick="evaluatePromptQuality()">评估提示词质量</button>
+                        </div>
+                    </section>
+                </div>
+
+                <div class="right-panel" aria-live="polite">
+                    <div class="loading" id="sd21-generate-loading">
+                        <div class="spinner"></div>
+                        <p id="sd21-loading-text">正在生成图像…</p>
+                        <div class="progress-wrap">
+                            <div class="progress-bar" id="sd21-progress-bar">
+                                <div class="progress-indeterminate"></div>
+                            </div>
+                            <p class="progress-hint">推理进行中，进度为估算；请耐心等待（可能需数十秒）。</p>
+                        </div>
+                    </div>
+
+                    <div class="result" id="sd21-generate-result" style="display: none;">
+                        <h3>生成结果</h3>
+                        <img id="sd21-result-image" src="" alt="生成图像">
+                        <div class="caption-result">
+                            <label class="field-label">图像描述</label>
+                            <p id="sd21-result-caption"></p>
+                        </div>
+                        <div class="clip-card" id="sd21-clip-evaluation" style="display: none;">
+                            <label class="field-label">CLIP</label>
+                            <p id="sd21-clip-quality"></p>
+                            <p id="sd21-clip-similarity"></p>
+                        </div>
+                        <div class="quality-metrics-card" id="sd21-quality-metrics" style="display: none;">
+                            <label class="field-label">图像质量评估</label>
+                            <div class="quality-overall">
+                                <span class="quality-score" id="sd21-img-quality-score"></span>
+                                <span class="quality-grade" id="sd21-img-quality-grade"></span>
+                            </div>
+                            <div class="quality-details" id="sd21-img-quality-details"></div>
+                        </div>
+                        <div class="quality-metrics-card" id="sd21-prompt-metrics" style="display: none;">
+                            <label class="field-label">提示词质量评估</label>
+                            <div class="quality-overall">
+                                <span class="quality-score" id="sd21-prompt-quality-score"></span>
+                                <span class="quality-grade" id="sd21-prompt-quality-grade"></span>
+                            </div>
+                            <div class="quality-details" id="sd21-prompt-quality-details"></div>
+                        </div>
+                        <div class="btn-row">
+                            <button type="button" class="btn btn-ghost" onclick="openQualityModal('image')">查看图片质量评估</button>
+                            <button type="button" class="btn btn-ghost" onclick="openQualityModal('prompt')">查看提示词质量评估</button>
+                            <button type="button" class="btn btn-ghost" onclick="downloadResultImage('sd21')">下载图片</button>
+                            <button type="button" class="btn btn-ghost" onclick="copyResultCaption('sd21')">复制描述</button>
+                            <button type="button" class="btn btn-danger-soft" onclick="speakCaption('sd21')">朗读描述</button>
+                        </div>
+                    </div>
+                    <div id="sd21-placeholder-result" class="placeholder-result">
+                        <div class="ph-icon" aria-hidden="true">◇</div>
+                        <p>在左侧输入提示词并点击「生成图像」，结果将显示在此处。</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- ControlNet -->
+        <div class="panel" id="controlnet-panel" role="tabpanel" aria-labelledby="tab-controlnet">
+            <div class="main-content">
+                <div class="left-panel">
+                    <section class="step">
+                        <h2 class="step-title"><span class="step-num">1</span>提示词</h2>
+                        <div class="input-group">
+                            <label class="field-label" for="cn-prompt">输入创意描述</label>
+                            <textarea id="cn-prompt" placeholder="描述你希望生成的画面…" rows="4"></textarea>
+                        </div>
+                    </section>
+
+                    <section class="step">
+                        <h2 class="step-title"><span class="step-num">2</span>可选：扩充提示词</h2>
+                        <button type="button" id="cn-enhance-btn" class="btn btn-secondary"
+                            onclick="enhancePrompt('cn')">扩充提示词</button>
+                        <div id="cn-enhance-loading" class="loading" style="display: none;">
+                            <div class="spinner"></div>
+                            <p id="cn-enhance-status">正在扩充…</p>
+                        </div>
+                        <div id="cn-enhanced-section" style="display: none; margin-top: 14px;">
+                            <div class="input-group">
+                                <label class="field-label" for="cn-enhanced-prompt">扩充结果（可编辑）</label>
+                                <textarea id="cn-enhanced-prompt" placeholder="扩充后的提示词…"></textarea>
+                            </div>
+                        </div>
+                    </section>
+
+                    <section class="step">
+                        <h2 class="step-title"><span class="step-num">3</span>参考模式与参考图</h2>
+                        <div class="input-group" style="margin-bottom: 12px;">
+                            <label class="field-label" for="cn-ref-mode">参考模式（单选）</label>
+                            <select id="cn-ref-mode" class="ui-select" onchange="onReferenceModeChange()">
+                                <option value="openpose">OpenPose 姿势</option>
+                                <option value="lineart">Lineart 线稿</option>
+                                <option value="softedge">SoftEdge (HED)</option>
+                                <option value="canny">Canny 硬边缘</option>
+                                <option value="ip_adapter">IP-Adapter</option>
+                            </select>
+                            <p id="cn-ref-hint" class="hint-text" style="margin-top: 8px;">加载模式说明中…</p>
+                        </div>
+                        <div class="controlnet-section">
+                            <h4>上传参考图</h4>
+                            <p class="hint-text" style="margin-bottom: 10px;">上传后按所选模式生成控制图或缩略图；服务端仅加载当前模式所需权重。</p>
+                            <div id="cn-upload-dropzone" class="controlnet-upload"
+                                onclick="document.getElementById('cn-reference-file').click()">
+                                <input type="file" id="cn-reference-file" accept="image/*" hidden
+                                    onchange="handleReferenceUpload(event)">
+                                <p style="color: var(--text-muted);">点击或选择图片上传</p>
+                                <p class="controlnet-hint">支持常见图片格式</p>
+                            </div>
+                            <div id="cn-upload-status" class="upload-status hidden">
+                                <p class="status-title">参考图已处理</p>
+                                <p class="status-sub">左侧为原图，右侧为当前模式下的控制图或输入图；生成时将仅加载本模式对应的 SD1.5 权重。</p>
+                            </div>
+                            <div class="cn-preview-row">
+                                <img id="cn-reference-preview" alt="参考图预览">
+                                <img id="cn-canny-preview" alt="控制图或输入图预览">
+                            </div>
+                            <button type="button" id="cn-reset-upload" class="btn btn-ghost hidden"
+                                onclick="resetCannyUpload()">重新选择图片</button>
+                        </div>
+                    </section>
+
+                    <section class="step">
+                        <h2 class="step-title"><span class="step-num">4</span>参数与生成</h2>
+                        <details class="advanced-block">
+                            <summary>高级参数：推理步数 / 引导强度</summary>
+                            <div class="slider-group" style="margin-top: 12px;">
+                                <div class="slider-item">
+                                    <label class="field-label">推理步数 <span id="cn-steps-value">50</span></label>
+                                    <input type="range" id="cn-steps" min="10" max="100" value="50"
+                                        oninput="document.getElementById('cn-steps-value').textContent = this.value">
+                                </div>
+                                <div class="slider-item">
+                                    <label class="field-label">引导系数 <span id="cn-guidance-value">10.0</span></label>
+                                    <input type="range" id="cn-guidance" min="1" max="20" value="10" step="0.5"
+                                        oninput="document.getElementById('cn-guidance-value').textContent = this.value">
+                                </div>
+                                <div class="slider-item" id="cn-cn-scale-wrap">
+                                    <label class="field-label">ControlNet 强度 <span id="cn-cn-scale-value">1.0</span></label>
+                                    <input type="range" id="cn-cn-scale" min="0" max="2" value="1" step="0.05"
+                                        oninput="document.getElementById('cn-cn-scale-value').textContent = parseFloat(this.value).toFixed(2)">
+                                </div>
+                                <div class="slider-item" id="cn-ip-wrap" style="display: none;">
+                                    <label class="field-label">IP-Adapter 强度 <span id="cn-ip-value">0.60</span></label>
+                                    <input type="range" id="cn-ip-scale" min="0" max="1" value="0.6" step="0.05"
+                                        oninput="document.getElementById('cn-ip-value').textContent = parseFloat(this.value).toFixed(2)">
+                                </div>
+                            </div>
+                        </details>
+                        <p class="hint-text" style="margin-top: 10px;">本页须上传参考图后生成；与「文生图」页独立，使用 SD1.5 底模 + 当前参考模式。</p>
+                        <div class="btn-row" style="margin-top: 12px;">
+                            <button type="button" id="cn-generate-btn" class="btn btn-primary"
+                                onclick="generateImage('cn')">生成图像</button>
+                            <button type="button" class="btn btn-secondary"
+                                onclick="evaluatePromptQuality()">评估提示词质量</button>
+                        </div>
+                    </section>
+                </div>
+
+                <div class="right-panel" aria-live="polite">
+                    <div class="loading" id="cn-generate-loading">
+                        <div class="spinner"></div>
+                        <p id="cn-loading-text">正在生成图像…</p>
+                        <div class="progress-wrap">
+                            <div class="progress-bar" id="cn-progress-bar">
+                                <div class="progress-indeterminate"></div>
+                            </div>
+                            <p class="progress-hint">推理进行中，请耐心等待（可能需数十秒）。</p>
+                        </div>
+                    </div>
+
+                    <div class="result" id="cn-generate-result" style="display: none;">
+                        <h3>生成结果</h3>
+                        <img id="cn-result-image" src="" alt="生成图像">
+                        <div class="caption-result">
+                            <label class="field-label">图像描述</label>
+                            <p id="cn-result-caption"></p>
+                        </div>
+                        <div class="clip-card" id="cn-clip-evaluation" style="display: none;">
+                            <label class="field-label">CLIP</label>
+                            <p id="cn-clip-quality"></p>
+                            <p id="cn-clip-similarity"></p>
+                        </div>
+                        <div class="quality-metrics-card" id="cn-quality-metrics" style="display: none;">
+                            <label class="field-label">图像质量评估</label>
+                            <div class="quality-overall">
+                                <span class="quality-score" id="cn-img-quality-score"></span>
+                                <span class="quality-grade" id="cn-img-quality-grade"></span>
+                            </div>
+                            <div class="quality-details" id="cn-img-quality-details"></div>
+                        </div>
+                        <div class="quality-metrics-card" id="cn-prompt-metrics" style="display: none;">
+                            <label class="field-label">提示词质量评估</label>
+                            <div class="quality-overall">
+                                <span class="quality-score" id="cn-prompt-quality-score"></span>
+                                <span class="quality-grade" id="cn-prompt-quality-grade"></span>
+                            </div>
+                            <div class="quality-details" id="cn-prompt-quality-details"></div>
+                        </div>
+                        <div class="btn-row">
+                            <button type="button" class="btn btn-ghost" onclick="openQualityModal('image')">查看图片质量评估</button>
+                            <button type="button" class="btn btn-ghost" onclick="openQualityModal('prompt')">查看提示词质量评估</button>
+                            <button type="button" class="btn btn-ghost" onclick="downloadResultImage('cn')">下载图片</button>
+                            <button type="button" class="btn btn-ghost" onclick="copyResultCaption('cn')">复制描述</button>
+                            <button type="button" class="btn btn-danger-soft" onclick="speakCaption('cn')">朗读描述</button>
+                        </div>
+                    </div>
+                    <div id="cn-placeholder-result" class="placeholder-result">
+                        <div class="ph-icon" aria-hidden="true">◇</div>
+                        <p>生成结果将显示在此处。请先选择参考模式并上传参考图。</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- 质量评估弹窗 -->
+    <div id="quality-modal" class="quality-modal-overlay" style="display: none;" onclick="closeQualityModal(event)">
+        <div class="quality-modal-content" onclick="event.stopPropagation()">
+            <div class="quality-modal-header">
+                <h2 id="quality-modal-title">质量评估</h2>
+                <button class="quality-modal-close" onclick="closeQualityModal()">&times;</button>
+            </div>
+            <div class="quality-modal-body">
+                <div class="quality-modal-score">
+                    <span class="quality-modal-score-value" id="quality-modal-overall-score">0</span>
+                    <span class="quality-modal-score-grade" id="quality-modal-overall-grade">--</span>
+                </div>
+                <div id="quality-modal-suggestions" class="quality-modal-suggestions" style="display: none;">
+                    <h4>改进建议</h4>
+                    <div id="quality-modal-suggestions-list"></div>
+                </div>
+                <div id="quality-modal-details" class="quality-modal-details"></div>
+            </div>
+        </div>
+    </div>
+
+    <div id="toast-region" aria-live="polite"></div>
+    <script src="/static/js/app.js?v=2" defer></script>
+</body>
+
+</html>

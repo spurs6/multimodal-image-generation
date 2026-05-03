@@ -1,0 +1,18 @@
+# PyTorch GPU：请勿用本文件单独装 torch，请运行 install_deps.bat（先装 CUDA 版 PyTorch 再装本文件）
+# 或先执行: pip install torch torchvision torchaudio --index-url https://download.pytorch.org/whl/cu124
+transformers>=4.30.0,<5
+diffusers>=0.27.0
+pyttsx3>=2.90
+pillow>=10.0.0
+numpy>=1.24.0
+requests>=2.31.0
+opencv-python>=4.8.0
+controlnet-aux>=0.0.7
+accelerate>=0.20.0
+peft>=0.13.0
+safetensors>=0.3.0
+fastapi>=0.136.0
+uvicorn>=0.23.0
+python-multipart>=0.0.6
+python-dotenv>=1.0.0
+sentencepiece>=0.2.0

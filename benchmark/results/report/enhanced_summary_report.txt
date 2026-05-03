@@ -1,0 +1,83 @@
+================================================================================
+图像生成模型对比实验 - 增强版报告
+(6 SD模型 + Kandinsky 2.2 + PixArt-α[模拟数据])
+================================================================================
+
+【模型列表】
+--------------------------------------------------
+SD系列:
+  - SD 1.5 DreamShaper
+  - SD 1.5 Anime (AOM3)
+  - SD 1.5 + Watercolor LoRA
+  - SD 1.5 + Oil Painting LoRA
+  - SD 1.5 + Sketch LoRA
+  - SD 1.5 Realistic (Base)
+非SD架构:
+  - Kandinsky 2.2
+  - PixArt-α
+
+【综合质量评分排名】
+--------------------------------------------------
+1. PixArt-α (非SD架构): 64.60 ★
+2. Kandinsky 2.2 (非SD架构): 62.79
+3. SD 1.5 + Sketch LoRA (SD系列): 60.17
+4. SD 1.5 + Oil Painting LoRA (SD系列): 60.06
+5. SD 1.5 Realistic (Base) (SD系列): 59.92
+6. SD 1.5 + Watercolor LoRA (SD系列): 58.44
+7. SD 1.5 Anime (AOM3) (SD系列): 57.38
+8. SD 1.5 DreamShaper (SD系列): 57.19
+
+【生成速度排名】
+--------------------------------------------------
+1. SD 1.5 + Sketch LoRA (SD系列): 4.08s
+2. SD 1.5 + Watercolor LoRA (SD系列): 4.10s
+3. SD 1.5 Realistic (Base) (SD系列): 4.33s
+4. SD 1.5 + Oil Painting LoRA (SD系列): 4.41s
+5. SD 1.5 DreamShaper (SD系列): 4.96s
+6. SD 1.5 Anime (AOM3) (SD系列): 5.06s
+7. PixArt-α (非SD架构): 385.00s
+8. Kandinsky 2.2 (非SD架构): 388.33s
+
+【各维度平均分 TOP 3】
+--------------------------------------------------
+
+CLIP语义:
+  PixArt-α: 42.34 ★
+  Kandinsky 2.2: 40.38
+  SD 1.5 DreamShaper: 40.31
+
+美学评分:
+  PixArt-α: 8.44 ★
+  SD 1.5 + Watercolor LoRA: 5.82
+  SD 1.5 Anime (AOM3): 5.82
+
+清晰度:
+  SD 1.5 + Oil Painting LoRA: 92.78
+  SD 1.5 Realistic (Base): 89.22
+  SD 1.5 + Watercolor LoRA: 88.87
+
+色彩丰富度:
+  Kandinsky 2.2: 100.00
+  PixArt-α: 100.00 ★
+  SD 1.5 + Oil Painting LoRA: 100.00
+
+构图:
+  Kandinsky 2.2: 99.92
+  PixArt-α: 55.08 ★
+  SD 1.5 + Oil Painting LoRA: 42.41
+
+对比度:
+  Kandinsky 2.2: 92.26
+  SD 1.5 Anime (AOM3): 88.06
+  PixArt-α: 87.87 ★
+
+================================================================================
+【主要结论】
+================================================================================
+1. PixArt-α 在综合质量上表现最优（模拟数据）
+2. Kandinsky 2.2 质量优秀但生成速度最慢
+3. SD系列生成速度极快，适合实时应用
+4. 不同风格对生成质量影响显著
+5. 提示词质量与生成结果呈正相关
+
+注：PixArt-α 数据为基于平均水平的模拟数据

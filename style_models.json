@@ -1,0 +1,43 @@
+{
+  "sd15_size": 512,
+  "anime": {
+    "hf_repo": "WarriorMama777/OrangeMixs",
+    "weight_file": "Models/AbyssOrangeMix3/AOM3A3_orangemixs.safetensors",
+    "local_fallback": "models/checkpoints/AOM3A3_orangemixs.safetensors",
+    "clip_skip": 2
+  },
+  "dreamshaper": {
+    "hf_repo": "Lykon/dreamshaper-8",
+    "local_fallback": null
+  },
+  "loras": {
+    "watercolor": {
+      "hf_repo": "fladdict/watercolor",
+      "weight_name": "fladdict-watercolor-sd-1-5.safetensors",
+      "local_fallback": "models/lora/fladdict-watercolor-sd-1-5.safetensors",
+      "adapter_name": "watercolor",
+      "scale": 0.85,
+      "prompt_hint": "watercolor painting, impressionism"
+    },
+    "oil": {
+      "hf_repo": "jqlive/sd15-digital-oil-arcane",
+      "weight_name": "pytorch_lora_weights.safetensors",
+      "local_fallback": "models/lora/sd15-oil-painting.safetensors",
+      "adapter_name": "oil",
+      "scale": 0.8,
+      "prompt_hint": "oil painting, detailed brushstrokes",
+      "note": "HF 镜像为 Arcane/数码油画风 LoRA；若需传统油画可换 Civitai 通用油画 LoRA 至 local_fallback 路径"
+    },
+    "sketch": {
+      "hf_repo": "jordanhilado/sd-1-5-sketch-lora",
+      "weight_name": "pytorch_lora_weights.safetensors",
+      "local_fallback": "models/lora/sd15-pencil-sketch.safetensors",
+      "adapter_name": "sketch",
+      "scale": 0.9,
+      "prepend_unet_prefix": true,
+      "prompt_prefix_en": "A color pencil sketch of",
+      "prompt_hint": "colored pencil texture, sketch lines on paper",
+      "note": "权重键为 down_blocks...processor.to_*_lora，缺少 unet. 前缀时 PEFT 无法挂载；加载时用 prepend_unet_prefix 补前缀。davidberenstein REPLORA 格式非标准 safetensors，不可用。"
+    }
+  }
+}

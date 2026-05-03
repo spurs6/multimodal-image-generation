@@ -1,0 +1,22 @@
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+.Python
+*.so
+*.egg
+*.egg-info/
+dist/
+build/
+.env
+.venv
+.venv*/
+venv/
+.env.bak
+node_modules/
+.DS_Store
+*.log
+# 本地放置的 SD 权重 / LoRA（见 style_models.json 中 local_fallback）
+models/
+# Hugging Face 默认缓存（项目目录 huggingface/，见 HF_HOME）
+huggingface/

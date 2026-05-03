@@ -1,0 +1,42 @@
+{
+  "sd15_base": "Lykon/dreamshaper-8",
+  "output_size": 768,
+  "modes": {
+    "openpose": {
+      "type": "controlnet",
+      "controlnet_repo": "lllyasviel/sd-controlnet-openpose",
+      "preprocessor": "openpose",
+      "label_zh": "OpenPose 姿势",
+      "hint_zh": "适合人物姿势与肢体；上传含人物的参考图。"
+    },
+    "lineart": {
+      "type": "controlnet",
+      "controlnet_repo": "lllyasviel/control_v11p_sd15_lineart",
+      "preprocessor": "lineart",
+      "label_zh": "Lineart 线稿",
+      "hint_zh": "适合线稿、二次元线结构；上传草图或线稿。"
+    },
+    "softedge": {
+      "type": "controlnet",
+      "controlnet_repo": "lllyasviel/sd-controlnet-hed",
+      "preprocessor": "hed",
+      "label_zh": "SoftEdge (HED)",
+      "hint_zh": "柔和整体边缘，比硬边缘 Canny 更自然。"
+    },
+    "canny": {
+      "type": "controlnet",
+      "controlnet_repo": "lllyasviel/sd-controlnet-canny",
+      "preprocessor": "canny",
+      "label_zh": "Canny 硬边缘",
+      "hint_zh": "经典硬边缘线稿控制，与旧版「Canny + ControlNet」一致；适合强调轮廓与结构。"
+    },
+    "ip_adapter": {
+      "type": "ip_adapter",
+      "ip_adapter_repo": "h94/IP-Adapter",
+      "ip_adapter_subfolder": "models",
+      "ip_adapter_weight": "ip-adapter_sd15_light_v11.bin",
+      "label_zh": "IP-Adapter",
+      "hint_zh": "整体风格/内容参考，不强调精确轮廓；上传任意 RGB 参考图。"
+    }
+  }
+}
